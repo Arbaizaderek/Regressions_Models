@@ -1,0 +1,158 @@
+---
+title: "Asignacion_3_Derek_Arbaiza"
+author: "Derek Arbaiza Barrantes"
+date: '2022-09-02'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(e1071)
+library(ggplot2)
+library(rpart)
+library(lubridate)
+library(stringr)
+```
+
+```{r}
+electricityData <- read.csv(file = "consumo_electrico_domestico.csv", header = TRUE, sep=";", dec=".")
+electricityData <- na.omit(electricityData)
+
+electricityData2007 <- electricityData %>% filter(grepl('2007', Fecha))
+
+electricityData2007Random <- electricityData2007[sample(1:1000),]
+
+n <- dim(electricityData2007Random)
+
+mySize <- n[1]
+
+mysample <- sample(1:mySize, round(mySize*0.4,0))
+
+test <- electricityData2007Random[mysample,]
+train <- electricityData2007Random[-mysample,]
+
+myModel1 <- svm(Energia_activa_global ~ Energia_reactiva_global, data = train, type="eps-regression")
+#Si le agrego el kernel = "linear", me baja la corelacion.
+
+myPrediction1 <- predict(myModel1, train)
+
+cor1 <- cor(train$Energia_activa_global, myPrediction1)
+
+##############################################################################################
+
+myModel2 <- svm(Energia_activa_global ~ Voltaje, data = train, type="eps-regression")
+
+#Si le agrego el kernel = "linear", me baja la corelacion.
+
+myPrediction2 <- predict(myModel2, train)
+
+cor2 <- cor(train$Energia_activa_global, myPrediction2)
+
+###############################################################################################
+
+myModel3 <- svm(Energia_activa_global ~ Intensidad_global, data = train, type="eps-regression",kernel = "linear")
+
+myPrediction3 <- predict(myModel3, train)
+
+cor3 <- cor(train$Energia_activa_global, myPrediction3)
+
+################################################################################################
+
+myModel4 <- svm(Energia_activa_global ~ Submedicion_3, data = train, type="eps-regression")
+
+myPrediction4 <- predict(myModel4, train)
+
+cor4 <- cor(train$Energia_activa_global, myPrediction4)
+
+################################################################################################
+
+myModel5 <- rpart(Energia_activa_global ~ Energia_reactiva_global, data = train, control = rpart.control(minsplit = 2))
+
+myPrediction5 <- predict(myModel5, train)
+
+cor5 <- cor(train$Energia_activa_global, myPrediction5)
+
+################################################################################################
+
+myModel6 <- rpart(Energia_activa_global ~ Voltaje, data = train, control = rpart.control(minsplit = 2))
+
+myPrediction6 <- predict(myModel6, train)
+
+cor6 <- cor(train$Energia_activa_global, myPrediction6)
+
+################################################################################################
+
+myModel7 <- rpart(Energia_activa_global ~ Intensidad_global, data = train, control = rpart.control(minsplit = 2))
+
+myPrediction7 <- predict(myModel7, train)
+
+cor7 <- cor(train$Energia_activa_global, myPrediction7)
+
+################################################################################################
+
+myModel8 <- rpart(Energia_activa_global ~ Submedicion_3, data = train, control = rpart.control(minsplit = 2))
+
+myPrediction8 <- predict(myModel8, train)
+
+cor8 <- cor(train$Energia_activa_global, myPrediction8)
+
+################################################################################################
+
+results <- data.frame(modelo = c("svg", "svg", "svg", "svg", "rpart", "rpart", "rpart", "rpart"),
+                      variable_a_predecir = c("Energia activa global", "Energia activa global", "Energia activa global", "Energia activa global", "Energia activa global", "Energia activa global", "Energia activa global", "Energia activa global"),
+                      variable_usada = c("Energia reactiva global", "Voltaje", "Intensidad Global", "Submedicion_3", "Energia reactiva global", "Voltaje", "Intensidad Global", "Submedicion_3"),
+                      corelacion = c(cor1, cor2, cor3, cor4, cor5, cor6, cor7, cor8))
+
+
+```
+
+```{r}
+RawElectricityData2020 <- read.csv(file = "consumo_electrico_domestico2020.csv", sep = ";", dec=".")
+
+ElectricityData2020 <- RawElectricityData2020
+
+
+
+ElectricityData2020 <- ElectricityData2020[-c(10,11)]
+
+ElectricityData2020 <- na.omit(ElectricityData2020)
+ 
+ElectricityData2020$Fecha <- as.Date(ElectricityData2020$Fecha, "%d/%m/%y")
+
+ElectricityData2020$HoraExtraida <- as.numeric(str_extract(ElectricityData2020$Hora, "\\d{2}"))
+
+
+DataGroupedByDate <- tapply(ElectricityData2020$Voltaje, ElectricityData2020$Fecha, mean)
+
+DataFrameGroupedByDate <- data.frame(Fecha = rownames(DataGroupedByDate), Valor = DataGroupedByDate)
+
+
+MaxRecord <- ElectricityData2020[ElectricityData2020$Voltaje == max(ElectricityData2020$Voltaje),]
+
+weekdays(MaxRecord$Fecha)
+
+finalFilteredData <- ElectricityData2020 %>%
+  filter(HoraExtraida == 15) %>%
+  filter(weekdays(Fecha) == "Sunday")
+
+```
+
+
+```{r}
+nn <- dim(ElectricityData2020)
+
+mySize2 <- n[1]
+
+mysample2 <- sample(1:mySize2, round(mySize*0.4,0))
+
+test2 <- ElectricityData2020[mysample,]
+train2 <- ElectricityData2020[-mysample,]
+
+myModelFF <- rpart(Energia_activa_global ~ Intensidad_global, data = train, control = rpart.control(minsplit = 2))
+
+myPredictionFF <- predict(myModelFF, train)
+
+corFF <- cor(train$Energia_activa_global, myPredictionFF)
+```
+

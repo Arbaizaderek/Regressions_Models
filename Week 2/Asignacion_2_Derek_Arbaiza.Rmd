@@ -1,0 +1,187 @@
+---
+title: "Asignacion_2_Derek_Arbaiza"
+author: "Derek Arbaiza Barrantes"
+date: '2022-08-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(nortest)
+library(corrplot)
+```
+
+```{r echo =FALSE}
+crimeData <- read.csv(file = "uscrime.csv", sep=",", dec=".", header = TRUE)
+crimeData$state <- as.numeric(crimeData$state)
+crimeData$fold <- as.numeric(crimeData$fold)
+crimeData<- na.omit(crimeData)
+```
+
+```{r}
+myHistogram <- hist(crimeData$ViolentCrimesPerPop, probability = T, main = "Main title goes here", xlab="xlab", ylab="ylab", col="blue")
+lines(density(crimeData$ViolentCrimesPerPop, na.rm = T), lwd = 2, col="white")
+mu <- mean(crimeData$ViolentCrimesPerPop, na.rm = T)
+sigma <- sd(crimeData$ViolentCrimesPerPop, na.rm = T)
+x <- seq(min(myHistogram$mids, na.rm = T), max(myHistogram$mids, na.rm = T), length = length(crimeData$ViolentCrimesPerPop))
+y <- dnorm(x, mu, sigma)
+lines(x,y,lwd=2, col="yellow")
+```
+
+
+```{r}
+newData <- density(crimeData$ViolentCrimesPerPop, na.rm = T)
+newData <- data.frame(x = newData$x,
+                      y = newData$y)
+
+newData2 <- data.frame(x = x,
+                      y = y)
+
+ggplot(data = newData) + 
+  geom_line(mapping = aes(x=x, y=y,), colour = "pink") + 
+  geom_line(data = newData2, mapping = aes(x=x, y=y), colour = "white")
+
+qqnorm(crimeData$ViolentCrimesPerPop) 
+qqline(crimeData$ViolentCrimesPerPop, col = "orange")
+
+```
+
+
+```{r}
+nortest::pearson.test(crimeData$ViolentCrimesPerPop)
+
+nortest::lillie.test(crimeData$ViolentCrimesPerPop)
+
+nortest::cvm.test(crimeData$ViolentCrimesPerPop)
+```
+
+```{r}
+
+#Acá si usaba todo el crimeData, me mandaba un grafico con demasiadas variables. 
+#Lo que hice fue usar la funcion cor sobre todo el data.frame de crimes para luego exportarlo en un cvs file. Filtre los datos y genere un data.frame con las variables que tenían más valor. 
+corelations <- cor(crimeData)
+
+clearData <- crimeData[c(5,20,31,33,35,41,43,44, 53, 80, 103)]
+
+corelations2 <- cor(clearData)
+
+corrplot(corelations, method = 'number', shade.col = NA, tl.col = "black", tl.srt = 20)
+corrplot(corelations2, method = 'number', shade.col = NA, tl.col = "black", tl.srt = 20)
+
+```
+
+```{r}
+plot(crimeData$ViolentCrimesPerPop, crimeData$racepctblack, xlab = "ViolentCrimesPerPop", ylab="racepctblack")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$pctWPubAsst, xlab = "ViolentCrimesPerPop", ylab="pctWPubAsst")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$PctPopUnderPov, xlab = "ViolentCrimesPerPop", ylab="PctPopUnderPov")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$PctNotHSGrad, xlab = "ViolentCrimesPerPop", ylab="PctNotHSGrad")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$PctUnemployed, xlab = "ViolentCrimesPerPop", ylab="PctUnemployed")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$MalePctDivorce, xlab = "ViolentCrimesPerPop", ylab="MalePctDivorce")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$FemalePctDiv, xlab = "ViolentCrimesPerPop", ylab="FemalePctDiv")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$TotalPctDiv, xlab = "ViolentCrimesPerPop", ylab="TotalPctDiv")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$PctIlleg, xlab = "ViolentCrimesPerPop", ylab="PctIlleg")
+
+plot(crimeData$ViolentCrimesPerPop, crimeData$PctHousNoPhone, xlab = "ViolentCrimesPerPop", ylab="PctHousNoPhone")
+```
+
+
+```{r}
+mySample <-  sample(1:1994, 1335)
+test <- crimeData[mySample,]
+train <- crimeData[-mySample,]
+
+myModel1 <- lm(ViolentCrimesPerPop ~ racepctblack , data = train)
+myPredection1 <- predict(myModel1, train)
+
+corr1 <- cor(train$ViolentCrimesPerPop, myPredection1)
+
+myModel2 <- lm(ViolentCrimesPerPop ~ pctWPubAsst , data = train)
+myPredection2 <- predict(myModel2, train)
+
+corr2 <- cor(train$ViolentCrimesPerPop, myPredection2)
+
+
+myModel3 <- lm(ViolentCrimesPerPop ~ PctPopUnderPov , data = train)
+myPredection3 <- predict(myModel3, train)
+
+corr3 <- cor(train$ViolentCrimesPerPop, myPredection3)
+
+myModel4 <- lm(ViolentCrimesPerPop ~ PctNotHSGrad , data = train)
+myPredection4 <- predict(myModel4, train)
+
+corr4 <- cor(train$ViolentCrimesPerPop, myPredection4)
+
+myModel5 <- lm(ViolentCrimesPerPop ~ PctUnemployed , data = train)
+myPredection5 <- predict(myModel5, train)
+
+corr5 <- cor(train$ViolentCrimesPerPop, myPredection5)
+
+myModel6 <- lm(ViolentCrimesPerPop ~ MalePctDivorce , data = train)
+myPredection6 <- predict(myModel6, train)
+
+corr6 <- cor(train$ViolentCrimesPerPop, myPredection6)
+
+myModel7 <- lm(ViolentCrimesPerPop ~ FemalePctDiv , data = train)
+myPredection7 <- predict(myModel7, train)
+
+corr7 <- cor(train$ViolentCrimesPerPop, myPredection7)
+
+myModel8 <- lm(ViolentCrimesPerPop ~ TotalPctDiv , data = train)
+myPredection8 <- predict(myModel8, train)
+
+corr8 <- cor(train$ViolentCrimesPerPop, myPredection8)
+
+myModel9 <- lm(ViolentCrimesPerPop ~ PctIlleg , data = train)
+myPredection9 <- predict(myModel9, train)
+
+corr9 <- cor(train$ViolentCrimesPerPop, myPredection9)
+
+myModel10 <- lm(ViolentCrimesPerPop ~ PctHousNoPhone , data = train)
+myPredection10 <- predict(myModel10, train)
+
+corr10 <- cor(train$ViolentCrimesPerPop, myPredection10)
+
+
+resultsPredicitions <- data.frame(Variable_usada = c("racepctblack", "pctWPubAsst", "PctPopUnderPov", "PctNotHSGrad", "PctUnemployed", "MalePctDivorce", "FemalePctDiv", "TotalPctDiv","PctIlleg",  "PctHousNoPhone"),
+                                  porcentaje_de_corelacion = c(corr1,corr2,corr3,corr4,corr5,corr6,corr7,corr8,corr9,corr10))
+
+#Considero que es mejor la variable PctIlleg para predecir dado que es el porcentaje mas alto de corelacion.
+```
+
+```{r}
+myModel11 <- lm(crimeData$ViolentCrimesPerPop ~ ViolentCrimesPerPop , data = crimeData)
+myPredection11 <- predict(myModel11, crimeData)
+
+cor(myPredection11, crimeData)
+
+summary(myModel11)
+
+```
+
+```{r}
+mySample2 <-  sample(1:1994, 1335)
+test2 <- crimeData[mySample2,]
+train2 <- crimeData[-mySample2,]
+
+train2$crime2 <- train2$ViolentCrimesPerPop^2
+
+polyModel <- lm(ViolentCrimesPerPop ~ ., data = train2)
+
+summary(polyModel)
+
+myPrediction12 <- predict(polyModel, train2)
+
+#cor(myPrediction12, crimeData$ViolentCrimesPerPop)
+
+
+```
+
